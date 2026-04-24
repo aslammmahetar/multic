@@ -1,6 +1,6 @@
 import { io } from "socket.io-client"
 
-const socket = io(process.env.SERVER_URL, {
+const socket = io(https://mt-backend-ni50.onrender.com, {
     withCredentials: true,
     autoConnect: true
 });
