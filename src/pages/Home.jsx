@@ -6,7 +6,6 @@ import {
 } from "react-router-dom";
 import socket from "../socket";
 import { toast } from "react-hot-toast";
-import AnimatedBackground from "../components/AnimatedBackground";
 import { getGeoLocation } from "../common/BasePage";
 
 const generateRoomCode = () =>
@@ -19,10 +18,15 @@ const Home = () => {
   const [roomData, setRoomData] = useState({});
   const [symbol, setSymbol] = useState("X");
   const [latLong, setLatLong] = useState({});
+  const [loading, setLoading] = useState({
+    createRoom: false,
+    joinRoom: false,
+  });
 
   //Create Room
   const handleCreateRoom = () => {
     try {
+      setLoading((prev) => ({ ...prev, createRoom: true }));
       const roomCode = generateRoomCode();
       socket.emit("create-room", {
         roomCode,
@@ -32,15 +36,17 @@ const Home = () => {
       });
       socket.on("room-created", (roomData) => {
         setRoomData(roomData);
+        setLoading((prev) => ({ ...prev, createRoom: false }));
       });
 
       setTimeout(() => {
         navigate(`/room/${roomCode}#`, {
           state: { isCreator: true },
         });
-      }, 1500);
+      }, 1000);
     } catch (error) {
       console.log(error);
+      setLoading((prev) => ({ ...prev, createRoom: false }));
     }
   };
 
@@ -53,6 +59,8 @@ const Home = () => {
         return;
       }
 
+      setLoading((prev) => ({ ...prev, joinRoom: true }));
+
       socket.emit("join-room", {
         roomCode,
         oppUserName: userNameRef.current.value,
@@ -62,15 +70,17 @@ const Home = () => {
       socket.on("room-joined", (roomData) => {
         console.log("Got the room data :", roomData);
         setRoomData(roomData);
+        setLoading((prev) => ({ ...prev, joinRoom: false }));
       });
 
       setTimeout(() => {
         navigate(`/room/${roomCode}`, {
           state: { isCreator: false },
         });
-      }, 1500);
+      }, 1000);
     } catch (error) {
       console.log(error);
+      setLoading((prev) => ({ ...prev, joinRoom: false }));
     }
   };
 
@@ -91,7 +101,7 @@ const Home = () => {
       <div className="h-screen flex flex-col items-center justify-center px-4">
         <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl p-8 w-full max-w-md">
           <h1 className="text-5xl font-bold mb-6 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Tic Tac Toe
+            Multic <br /> Tic Tac Toe
           </h1>
           <div className="space-y-6">
             <div>
@@ -106,11 +116,11 @@ const Home = () => {
               />
             </div>
             <div className="bg-blue-50/50 p-4 rounded-lg">
-              <div className="flex items-center justify-between gap-4">
+              <div className="">
+                <label className="block text-grey-700 text-sm font-medium mb-1">
+                  Play As
+                </label>
                 <div className="flex-1">
-                  <label className="block text-grey-700 text-sm font-medium mb-1">
-                    Play As
-                  </label>
                   <select
                     value={symbol}
                     onChange={(e) => setSymbol(e.target.value)}
@@ -119,13 +129,14 @@ const Home = () => {
                     <option value="X">X</option>
                     <option value="O">O</option>
                   </select>
+                  <button
+                    onClick={handleCreateRoom}
+                    disabled={loading.createRoom}
+                    className="mt-5 w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-3 rounded-lg shadow-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 flex-shrink-0"
+                  >
+                    {loading.createRoom ? "Creating..." : "Create Room"}
+                  </button>
                 </div>
-                <button
-                  onClick={handleCreateRoom}
-                  className="mt-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-3 rounded-lg shadow-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 flex-shrink-0"
-                >
-                  Create Room
-                </button>
               </div>
             </div>
             <div className="relative">
@@ -140,7 +151,7 @@ const Home = () => {
               <label className="block text-gray-700 text-sm font-medium mb-1">
                 Join Existing Room
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <input
                   type="text"
                   ref={roomCodeRef}
@@ -149,10 +160,10 @@ const Home = () => {
                 />
                 <button
                   onClick={handleJoinRoom}
-                  className="bg-gradient-to-r from-green-600 to bg-green-500 text-white px-6 py-3 rounded-lg shadow-md hover:from-green-700 to-green-600 transition-all duration-300"
+                  disabled={loading.joinRoom}
+                  className="w-full sm:w-auto bg-gradient-to-r from-green-600 to bg-green-500 text-white px-6 py-3 rounded-lg shadow-md hover:from-green-700 to-green-600 transition-all duration-300"
                 >
-                  {" "}
-                  Join Room
+                  {loading.joinRoom ? "Joining..." : "Join Room"}
                 </button>
               </div>
             </div>

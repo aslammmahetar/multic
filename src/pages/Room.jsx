@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import socket from "../socket";
 import GameHeader from "../components/GameHeader";
 import AnimatedBackground from "../components/AnimatedBackground";
@@ -8,6 +8,7 @@ import { getGeoLocation } from "../common/BasePage";
 
 const Room = () => {
   const location = useLocation();
+  const params = useParams();
   const navigate = useNavigate();
   const state = location.state;
   const [roomData, setRoomData] = useState({});
@@ -20,6 +21,18 @@ const Room = () => {
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("connecting");
   const [showPlayAgain, setShowPlayAgain] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(params?.roomCode);
+      setCopied(true);
+
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error("Copy failed", err);
+    }
+  };
 
   useEffect(() => {
     const storedData = JSON.parse(localStorage.getItem("roomData"));
@@ -194,6 +207,23 @@ const Room = () => {
         ) : (
           <h1>Welcom to the room {roomData?.joiner?.Name} </h1>
         )}
+        <div className="fixed top-20 right-8 z-50">
+          <div className="flex items-center gap-3 bg-white/90 backdrop-blur-md shadow-lg border border-gray-200 rounded-xl px-4 py-2">
+            {/* Room Code */}
+            <div className="text-sm font-semibold text-gray-700">
+              Room Code:{" "}
+              <span className="text-blue-600">{params?.roomCode}</span>
+            </div>
+
+            {/* Copy Button */}
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md transition"
+            >
+              {copied ? <>Copied</> : <>Copy</>}
+            </button>
+          </div>
+        </div>
         <div className="h-screen flex flex-col items-center justify-center px-4">
           <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl p-8 w-full max-w-md">
             {connectionStatus === "connecting" ? (
